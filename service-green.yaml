@@ -1,13 +1,21 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-green
+  name: nginx-green-svc
   namespace: develop
+  labels:
+    app.kubernetes.io/name: nginx-green
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: green
+    app.kubernetes.io/version: "1.0"
 spec:
   selector:
-    app: nginx-green
+    app.kubernetes.io/name: nginx-green
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: green
+    app.kubernetes.io/version: "1.0"
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: http-green-svc
   type: ClusterIP

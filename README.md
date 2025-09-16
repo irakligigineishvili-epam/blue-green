@@ -1,49 +1,51 @@
 # Blue and Green Apps for Kubernetes
 
-This directory contains Kubernetes manifests for deploying two independent applications: **blue** and **green**. Each app has its own deployment, service, configuration, and optional ingress files.
+This directory contains Kubernetes manifests for deploying two simple nginx-based apps. Each app has its own Deployment, Service, ConfigMap and Ingress. The manifests target the `develop` namespace and assume an `nginx` ingressClass.
 
-## Files
+## Files in this folder
 
-- `deployment-blue.yaml`: Deployment manifest for the blue app
-- `deployment-green.yaml`: Deployment manifest for the green app
-- `service-blue.yaml`: Service definition for the blue app
-- `service-green.yaml`: Service definition for the green app
-- `config-blue.yaml`: Configuration for the blue app
-- `config-green.yaml`: Configuration for the green app
-- `ingress-blue.yaml`: Ingress resource to expose only the blue app
-- `ingress-green.yaml`: Ingress resource to expose only the green app
+- `deployment-blue.yaml` - Deployment for the blue app
+- `deployment-green.yaml` - Deployment for the green app
+- `service-blue.yaml` - ClusterIP service exposing the blue app
+- `service-green.yaml` - ClusterIP service exposing the green app
+- `config-blue.yaml` - ConfigMap used by the blue nginx to return a simple response
+- `config-green.yaml` - ConfigMap used by the green nginx to return a simple response
+- `ingress-blue.yaml` - Ingress routing path `/blue` to the blue service
+- `ingress-green.yaml` - Ingress routing path `/green` to the green service
+- `hpa-blue.yaml` / `hpa-green.yaml` - Horizontal Pod Autoscalers for each deployment
 
-## How to Use
+## Quick prerequisites
 
-Apply resources using `kubectl`:
+- A Kubernetes cluster with the `develop` namespace (manifests include `namespace: develop`).
+- An ingress controller that honors `ingressClassName: nginx` (or edit the field to match your ingress class).
+- `kubectl` configured to talk to the cluster.
+- (Optional) `metrics-server` or equivalent for HPA to work.
 
-```sh
-kubectl apply -f deployment-blue.yaml
-kubectl apply -f service-blue.yaml
+## Apply all resources (recommended order)
+
+Apply namespace (if you don't have it) and the ConfigMaps, Deployments, Services, HPA and Ingress. Example:
+
+```bash
+# create namespace if missing
+kubectl create ns develop --dry-run=client -o yaml | kubectl apply -f -
+
+# configmaps
 kubectl apply -f config-blue.yaml
-
-kubectl apply -f deployment-green.yaml
-kubectl apply -f service-green.yaml
 kubectl apply -f config-green.yaml
 
-kubectl apply -f ingress-blue.yaml 
+# deployments
+kubectl apply -f deployment-blue.yaml
+kubectl apply -f deployment-green.yaml
+
+# services
+kubectl apply -f service-blue.yaml
+kubectl apply -f service-green.yaml
+
+# autoscalers (requires metrics-server)
+kubectl apply -f hpa-blue.yaml
+kubectl apply -f hpa-green.yaml
+
+# ingresses (adjust ingressClassName/host as needed)
+kubectl apply -f ingress-blue.yaml
 kubectl apply -f ingress-green.yaml
-## Ingress paths
-
-If you use the provided per-app ingress resources, they expose each app under a path prefix on the same host (depending on your ingress controller/host configuration).
-
-- `ingress-blue.yaml`
-	- path prefix: `/blue`
-	- service: `nginx-blue`
-	- port: `80`
-	- namespace: `develop`
-	- ingressClassName: `nginx`
-
-- `ingress-green.yaml`
-	- path prefix: `/green`
-	- service: `nginx-green`
-	- port: `80`
-	- namespace: `develop`
-	- ingressClassName: `nginx`
-
 ```

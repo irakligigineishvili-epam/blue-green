@@ -1,32 +1,68 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-blue
+  name: nginx-blue-deployment
   namespace: develop
   labels:
-    app: nginx-blue
+    app.kubernetes.io/name: nginx-blue
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: blue
+    app.kubernetes.io/version: "1.0"
 spec:
-  replicas: 2
   selector:
     matchLabels:
-      app: nginx-blue
+      app.kubernetes.io/name: nginx-blue
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: blue
+      app.kubernetes.io/version: "1.0"
   template:
     metadata:
       labels:
-        app: nginx-blue
+        app.kubernetes.io/name: nginx-blue
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: blue
+        app.kubernetes.io/version: "1.0"
     spec:
       containers:
       - name: nginx-blue
-        image: nginx
+        image: nginx:1.29
         ports:
         - containerPort: 80
+          name: http-blue-svc
         volumeMounts:
         - name: config-volume
           mountPath: /etc/nginx/conf.d
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "25m"
+          limits:
+            memory: "128Mi"
+            cpu: "50m"
+        readinessProbe:
+          httpGet:
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: nginx-blue
+            app.kubernetes.io/component: frontend
+            app.kubernetes.io/instance: blue
+            app.kubernetes.io/version: "1.0"
       volumes:
       - name: config-volume
         configMap:
-          name: blue
+          name: blue-config
           items:
           - key: nginx.conf
             path: nginx.conf

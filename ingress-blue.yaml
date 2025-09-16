@@ -1,8 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: blue-ingress
+  name: blue-ing
   namespace: develop
+  labels:
+    app.kubernetes.io/name: nginx-blue
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: blue
+    app.kubernetes.io/version: "1.0"
 spec:
   ingressClassName: nginx
   rules:
@@ -12,6 +17,6 @@ spec:
         path: "/blue"
         backend:
           service:
-            name: nginx-blue
+            name: nginx-blue-svc
             port:
               number: 80
