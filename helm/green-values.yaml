@@ -1,0 +1,125 @@
+conf:
+  appName: green
+  tier: frontend
+  environment: develop
+  version: "0.0.1"
+
+replicaCount: 2
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+image:
+  repository: nginx
+  tag: "1.29"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+livenessProbe:
+  httpGet:
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "25m"
+  limits:
+    memory: "128Mi"
+    cpu: "50m"
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    minDomains: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: green
+        app.kubernetes.io/version: 0.0.1    
+
+nodeSelector: {}
+
+affinity: {}
+
+tolerations: []
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    enabled: false
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      selectPolicy: Max
+      percentValue: 100
+      podValue: 1
+      periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 180
+      selectPolicy: Max
+      percentValue: 50
+      podValue: 1
+      periodSeconds: 15
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /etc/nginx/conf.d
+
+volumes:
+  - name: config-volume
+    configMap:
+      name: green-config
+      items:
+        - key: nginx.conf
+          path: nginx.conf
+
+configmap:
+  create: true
+  data:
+    nginx.conf: |
+      server {
+        listen 80;
+        server_name localhost;
+        location / {
+          return 200 "Green!\n";
+        }
+      }
+  binaryData: {}
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: ""
+      paths:
+        - path: /green
+          pathType: Prefix
