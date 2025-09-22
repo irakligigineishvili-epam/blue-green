@@ -42,7 +42,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "epam.selectorLabels" -}}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/instance: {{ .Values.conf.appName }}
 app.kubernetes.io/component: {{ .Values.conf.tier }}
 environment: {{ .Values.conf.environment }}
 {{- end }}

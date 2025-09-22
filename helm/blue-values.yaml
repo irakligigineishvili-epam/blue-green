@@ -1,9 +1,11 @@
+#  Application Configuration
 conf:
   appName: blue
   tier: frontend
-  environment: develop
+  environment: development
   version: "0.0.1"
 
+#  Deployment Settings
 replicaCount: 2
 
 strategy:
@@ -20,19 +22,17 @@ image:
 imagePullSecrets: []
 
 serviceAccount:
-  name: "blue"
   create: true
+  name: "blue"
   automount: false
   annotations: {}
 
+# Security Contexts
 podSecurityContext: {}
 
 securityContext: {}
 
-service:
-  type: ClusterIP
-  port: 80
-
+# Probes
 livenessProbe:
   httpGet:
     port: 80
@@ -45,6 +45,7 @@ readinessProbe:
   initialDelaySeconds: 5
   periodSeconds: 10
 
+# Resources
 resources:
   requests:
     memory: "64Mi"
@@ -52,6 +53,36 @@ resources:
   limits:
     memory: "128Mi"
     cpu: "50m"
+
+# Service
+service:
+  type: ClusterIP
+  port: 80
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: ""
+      paths:
+        - path: /blue
+          pathType: Prefix
+
+# Scheduling: Affinity, Tolerations, Topology
+nodeSelector: {}
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - minikube-m02
+
+tolerations: []
 
 topologySpreadConstraints:
   - maxSkew: 1
@@ -62,14 +93,9 @@ topologySpreadConstraints:
       matchLabels:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/instance: blue
-        app.kubernetes.io/version: 0.0.1    
+        app.kubernetes.io/version: 0.0.1
 
-nodeSelector: {}
-
-affinity: {}
-
-tolerations: []
-
+# Autoscaling
 autoscaling:
   enabled: true
   minReplicas: 3
@@ -91,6 +117,7 @@ autoscaling:
       podValue: 1
       periodSeconds: 15
 
+# Volumes
 volumeMounts:
   - name: config-volume
     mountPath: /etc/nginx/conf.d
@@ -103,6 +130,7 @@ volumes:
         - key: nginx.conf
           path: nginx.conf
 
+# ConfigMap
 configmap:
   create: true
   data:
@@ -115,12 +143,3 @@ configmap:
         }
       }
   binaryData: {}
-
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: ""
-      paths:
-        - path: /blue
-          pathType: Prefix

@@ -1,123 +1,198 @@
-# Default values for epam.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# Default values for the Helm chart.
 
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
-replicaCount: 1
+# Application Configuration
 
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+conf:
+  # Name of the application (used in naming resources and labels)
+  appName: "myapp"
+
+  # Tier or component name (e.g., frontend, backend)
+  tier: "frontend"
+
+  # Deployment environment (e.g., dev, staging, prod)
+  environment: "development"
+
+  # Version of the application
+  version: "0.1.0"
+
+# Deployment Settings
+
+# Number of pod replicas
+replicaCount: 1 # ignored by HPA if enabled
+
+# Deployment strategy and update parameters
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+# Container Image
+
 image:
-  repository: nginx
-  # This sets the pull policy for images.
+  # Docker image repository name
+  repository: "nginx"
+
+  # Docker image tag/version
+  tag: "latest"
+
+  # Kubernetes image pull policy: Always, IfNotPresent, Never
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+# Secrets for pulling images from private registries
 imagePullSecrets: []
-# This is to override the chart name.
-nameOverride: ""
-fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+# Service Account Configuration
+
 serviceAccount:
-  # Specifies whether a service account should be created
+  # Create a new service account
   create: true
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+
+  # Specify the name of the service account; leave empty to auto-generate
   name: ""
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  # Mount service account token automatically
+  automount: true
+
+  # Annotations to add to the service account
+  annotations: {}
+
+# Pod Metadata
+
+# Annotations to add to the pod
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+
+# Labels to add to the pod
 podLabels: {}
 
+# Security Contexts
+
+# Pod-level security context
 podSecurityContext: {}
-  # fsGroup: 2000
 
+# Container-level security context
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
-service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
+# Health Checks
 
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# Liveness probe configuration
 livenessProbe:
   httpGet:
     path: /
-    port: http
+    port: 80
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+# Readiness probe configuration
 readinessProbe:
   httpGet:
     path: /
-    port: http
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
-autoscaling:
+# Resource Requests and Limits
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+  
+
+# Topology Spread Constraints
+# Used to control how pods are spread across nodes or zones for high availability.
+# More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+
+topologySpreadConstraints:
+  # Example constraint spreading pods across nodes by hostname
+  - maxSkew: 1                     # Max difference in number of pods between domains
+    topologyKey: "kubernetes.io/hostname"  # Node label to spread pods across (usually hostname or zone)
+    whenUnsatisfiable: DoNotSchedule       # Behavior if constraints cannot be met (DoNotSchedule or ScheduleAnyway)
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: "{{ .Values.conf.appName | default \"myapp\" }}"  # Match pods with this label
+
+# Kubernetes Service
+
+service:
+  # Service type: ClusterIP, NodePort, LoadBalancer, ExternalName
+  type: ClusterIP
+
+  # Service port
+  port: 80
+
+# Ingress Configuration
+
+ingress:
+  # Enable ingress resource
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
-# Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+  # Ingress class name, e.g. "nginx"
+  className: ""
 
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+  # Annotations for ingress resource
+  annotations: {}
 
+  # List of ingress hosts and paths
+  hosts:
+    - host: "example.local"
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+  # TLS configuration for ingress
+  tls: []
+  # - secretName: example-tls
+  #   hosts:
+  #     - example.local
+
+# Node Scheduling
+
+# Node selector to constrain scheduling to specific nodes
 nodeSelector: {}
 
+# List of node taint tolerations
 tolerations: []
 
+# Affinity rules for scheduling pods
 affinity: {}
+
+# Volumes and Volume Mounts
+
+# Additional volumes to mount into pods
+volumes: []
+
+# Volume mounts for containers
+volumeMounts: []
+
+# Autoscaling Configuration
+
+autoscaling:
+  enabled: false
+
+  # Minimum number of replicas
+  minReplicas: 1
+
+  # Maximum number of replicas
+  maxReplicas: 5
+
+  # Target average CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+
+  # Target average memory utilization percentage (optional)
+  targetMemoryUtilizationPercentage: 80
+
+# ConfigMap (optional)
+
+configmap:
+  # Whether to create a ConfigMap resource
+  create: false
+
+  # Data to store in the ConfigMap
+  data: {}
+
+  # Binary data for ConfigMap (optional)
+  binaryData: {}

@@ -1,9 +1,11 @@
+# Application Configuration
 conf:
   appName: green
   tier: frontend
   environment: develop
   version: "0.0.1"
 
+# Deployment Settings
 replicaCount: 2
 
 strategy:
@@ -12,38 +14,49 @@ strategy:
     maxUnavailable: 1
     maxSurge: 1
 
+# Image configuration for the container
 image:
   repository: nginx
   tag: "1.29"
   pullPolicy: IfNotPresent
 
+# Secrets for pulling an image from a private registry
 imagePullSecrets: []
 
+# Override chart name
+nameOverride: ""
+fullnameOverride: ""
+
+# Service Account settings
 serviceAccount:
   create: true
+  name: "green"
   automount: false
   annotations: {}
 
-podSecurityContext: {}
+# Pod annotations and labels
+podAnnotations: {}
+podLabels: {}
 
+# Security contexts
+podSecurityContext: {}
 securityContext: {}
 
-service:
-  type: ClusterIP
-  port: 80
-
+# Liveness probe configuration
 livenessProbe:
   httpGet:
     port: 80
   initialDelaySeconds: 5
   periodSeconds: 10
 
+# Readiness probe configuration
 readinessProbe:
   httpGet:
     port: 80
   initialDelaySeconds: 5
   periodSeconds: 10
 
+# Resource requests and limits
 resources:
   requests:
     memory: "64Mi"
@@ -52,6 +65,41 @@ resources:
     memory: "128Mi"
     cpu: "50m"
 
+# Kubernetes service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: ""
+      paths:
+        - path: /green
+          pathType: Prefix
+  tls: []
+
+# Node selection constraints
+nodeSelector: {}
+
+# Tolerations for taints
+tolerations: []
+
+# Affinity rules for pod scheduling
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - minikube-m02
+
+# Topology spread constraints
 topologySpreadConstraints:
   - maxSkew: 1
     minDomains: 1
@@ -61,18 +109,13 @@ topologySpreadConstraints:
       matchLabels:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/instance: green
-        app.kubernetes.io/version: 0.0.1    
+        app.kubernetes.io/version: 0.0.1
 
-nodeSelector: {}
-
-affinity: {}
-
-tolerations: []
-
+# Horizontal Pod Autoscaler
 autoscaling:
   enabled: true
   minReplicas: 3
-  maxReplicas: 5
+  maxReplicas: 7
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
   behavior:
@@ -90,10 +133,7 @@ autoscaling:
       podValue: 1
       periodSeconds: 15
 
-volumeMounts:
-  - name: config-volume
-    mountPath: /etc/nginx/conf.d
-
+# Additional volumes
 volumes:
   - name: config-volume
     configMap:
@@ -102,6 +142,12 @@ volumes:
         - key: nginx.conf
           path: nginx.conf
 
+# Volume mounts
+volumeMounts:
+  - name: config-volume
+    mountPath: /etc/nginx/conf.d
+
+# ConfigMap settings
 configmap:
   create: true
   data:
@@ -114,12 +160,3 @@ configmap:
         }
       }
   binaryData: {}
-
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: ""
-      paths:
-        - path: /green
-          pathType: Prefix
