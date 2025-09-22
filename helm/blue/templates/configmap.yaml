@@ -1,0 +1,21 @@
+{{- if .Values.configmap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "epam.configmap" . | quote }}
+  labels:
+    {{- include "epam.labels" . | nindent 4 }}
+{{- if .Values.configmap.data }}
+data:
+{{- range $key, $value := .Values.configmap.data }}
+  {{ $key }}: |-
+{{ $value | indent 4 }}
+{{- end }}
+{{- end }}
+{{- if .Values.configmap.binaryData }}
+binaryData:
+{{- range $key, $value := .Values.configmap.binaryData }}
+  {{ $key }}: {{ $value | b64enc }}
+{{- end }}
+{{- end }}
+{{- end }}

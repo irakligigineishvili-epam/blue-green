@@ -1,0 +1,206 @@
+# Default values for the Helm chart.
+
+# Application Configuration
+
+conf:
+  # Name of the application (used in naming resources and labels)
+  appName: "myapp"
+
+  # Tier or component name (e.g., frontend, backend)
+  tier: "frontend"
+
+  # Deployment environment (e.g., dev, staging, prod)
+  environment: "development"
+
+  # Version of the application
+  version: "0.1.0"
+
+# Deployment Settings
+
+# Number of pod replicas
+replicaCount: 1 # ignored by HPA if enabled
+
+# Deployment strategy and update parameters
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+# Container Image
+
+image:
+  # Docker image repository name
+  repository: "nginx"
+
+  # Docker image tag/version
+  tag: "latest"
+
+  # Kubernetes image pull policy: Always, IfNotPresent, Never
+  pullPolicy: IfNotPresent
+
+# Secrets for pulling images from private registries
+imagePullSecrets: []
+
+# Service Account Configuration
+
+serviceAccount:
+  # Create a new service account
+  create: true
+
+  # Specify the name of the service account; leave empty to auto-generate
+  name: ""
+
+  # Mount service account token automatically
+  automount: true
+
+  # Annotations to add to the service account
+  annotations: {}
+
+# Pod Metadata
+
+# Annotations to add to the pod
+podAnnotations: {}
+
+# Labels to add to the pod
+podLabels: {}
+
+# Security Contexts
+
+# Pod-level security context
+podSecurityContext: {}
+
+# Container-level security context
+securityContext: {}
+
+# Health Checks
+
+# Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+# Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+# Resource Requests and Limits
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+  
+
+# Topology Spread Constraints
+# Used to control how pods are spread across nodes or zones for high availability.
+# More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+
+topologySpreadConstraints:
+  # Example constraint spreading pods across nodes by hostname
+  - maxSkew: 1                     # Max difference in number of pods between domains
+    topologyKey: "kubernetes.io/hostname"  # Node label to spread pods across (usually hostname or zone)
+    whenUnsatisfiable: DoNotSchedule       # Behavior if constraints cannot be met (DoNotSchedule or ScheduleAnyway)
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: "{{ .Values.conf.appName | default \"myapp\" }}"  # Match pods with this label
+
+# Kubernetes Service
+
+service:
+  # Service type: ClusterIP, NodePort, LoadBalancer, ExternalName
+  type: ClusterIP
+
+  # Service port
+  port: 80
+
+# Ingress Configuration
+
+ingress:
+  # Enable ingress resource
+  enabled: false
+
+  # Ingress class name, e.g. "nginx"
+  className: ""
+
+  # Annotations for ingress resource
+  annotations: {}
+
+  # List of ingress hosts and paths
+  hosts:
+    - host: "example.local"
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+  # TLS configuration for ingress
+  tls: []
+  # - secretName: example-tls
+  #   hosts:
+  #     - example.local
+
+# Node Scheduling
+
+# Node selector to constrain scheduling to specific nodes
+nodeSelector: {}
+
+# List of node taint tolerations
+tolerations: []
+
+# Affinity rules for scheduling pods
+affinity: {}
+
+# Volumes and Volume Mounts
+
+# Additional volumes to mount into pods
+volumes: []
+
+# Volume mounts for containers
+volumeMounts: []
+
+# Autoscaling Configuration
+
+autoscaling:
+  enabled: false
+
+  # Minimum number of replicas
+  minReplicas: 1
+
+  # Maximum number of replicas
+  maxReplicas: 5
+
+  # Target average CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+
+  # Target average memory utilization percentage (optional)
+  targetMemoryUtilizationPercentage: 80
+
+# ConfigMap (optional)
+
+configmap:
+  # Whether to create a ConfigMap resource
+  create: false
+
+  # Data to store in the ConfigMap
+  data: {}
+
+  # Binary data for ConfigMap (optional)
+  binaryData: {}
+
+dependencies:
+  - name: appBlue
+    version: 0.1.0
+    repository: "file://../appBlue"
+  - name: appGreen
+    version: 0.1.0
+    repository: "file://../appGreen"

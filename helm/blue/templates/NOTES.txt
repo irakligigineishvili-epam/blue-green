@@ -1,0 +1,28 @@
+Helm Chart Deployment
+
+1. Deployment Information:
+   - Release Name: {{ .Release.Name }}
+   - Namespace: {{ .Release.Namespace }}
+   - Environment: {{.Values.conf.environment }}
+   - Chart Name: {{ .Chart.Name }}
+   - Chart Version: {{ .Chart.Version }}
+
+2. Service Information:
+   - Service Name: {{ .Values.conf.appName }}-svc
+   - Service Type: {{ .Values.service.type }}
+   - Service Port: {{ .Values.service.port }}
+
+3. Accessing application:
+   - Once the service is ready, you can access it at the following endpoint:
+     http://<ADDRESS>/{{ .Values.conf.appName }}
+
+4. Useful Commands:
+   - Check the App Deployment Status:
+     helm status {{ .Release.Name }}
+
+   - Get Detailed Information about the App Deployment:
+     helm get all {{ .Release.Name }}
+
+5. Clean Up:
+   - To uninstall/delete the App deployment, run:
+     helm uninstall {{ .Release.Name }}
