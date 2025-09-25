@@ -1,0 +1,52 @@
+# Path to your Oh My Zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Theme
+ZSH_THEME="robbyrussell"
+
+# Enable plugins
+plugins=(
+  git
+  zsh-autosuggestions
+  zsh-syntax-highlighting
+  zsh-history-substring-search
+  you-should-use
+  colorize
+  pip
+  python
+  brew
+  zsh-bat
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# Enable command autocorrection
+ENABLE_CORRECTION="true"
+
+# Enable kubectl autocompletion
+autoload -Uz compinit
+compinit
+if command -v kubectl >/dev/null 2>&1; then
+  source <(kubectl completion zsh)
+fi
+# zsh-history-substring-search keybindings
+bindkey '\e[A' history-substring-search-up
+bindkey '\e[B' history-substring-search-down
+
+# Add autosuggestions and syntax highlighting
+# (ensure these are sourced after compinit and oh-my-zsh)
+source ${(q-)ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source ${(q-)ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ${(q-)ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
+
+# History settings
+setopt APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt EXTENDED_HISTORY
+HISTFILE=$HOME/.zhistory
+SAVEHIST=1000
+HISTSIZE=999
+
+# Disable bell
+setopt NO_BEEP
